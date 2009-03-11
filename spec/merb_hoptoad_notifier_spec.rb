@@ -108,6 +108,18 @@ describe "HoptoadNotifier" do
             HoptoadNotifier.warn_hoptoad(nil, @request, {}, :error_class => "ToasterFireException")
           end
         end
+
+        describe "and options[:error_class] is not set" do
+          it "should use message for the error class" do
+            RR::Space.reset_double(HoptoadNotifier, :send_to_hoptoad)
+
+            mock(HoptoadNotifier).send_to_hoptoad(
+              satisfy {|arg| arg[:notice][:error_class] == "Out of cheese"}
+            )
+
+            HoptoadNotifier.warn_hoptoad("Out of cheese", @request, {}, {})
+          end
+        end
       end
     end
 
