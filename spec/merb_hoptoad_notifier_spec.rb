@@ -73,6 +73,44 @@ describe "HoptoadNotifier" do
       end
     end
 
+    describe ".warn_hoptoad" do
+      describe "when request is nil" do
+        it "should return nil" do
+          HoptoadNotifier.warn_hoptoad(nil, nil, nil).should be_nil
+        end
+
+        it "should not send anything to hoptoad" do
+          dont_allow(HoptoadNotifier).send_to_hoptoad
+          HoptoadNotifier.warn_hoptoad(nil, nil, nil)
+        end
+      end
+
+      describe "when request is not nil" do
+        before(:each) do
+          mock(HoptoadNotifier).send_to_hoptoad(anything)
+          @request = setup_merb_request
+          mock(@request).params { {"banana_count" => "666"} }
+        end
+        
+        it "should return true" do
+          HoptoadNotifier.warn_hoptoad(nil, @request, {}).should be_true
+        end
+
+        describe "and options[:error_class] is set" do
+          it "should use that for the error class instead of message" do
+            RR::Space.reset_double(HoptoadNotifier, :send_to_hoptoad)
+              
+            # Must use satisfy here because hash_including doesn't seem to work for nested hashes
+            mock(HoptoadNotifier).send_to_hoptoad(
+              satisfy {|arg| arg[:notice][:error_class] == "ToasterFireException"}
+            )
+
+            HoptoadNotifier.warn_hoptoad(nil, @request, {}, :error_class => "ToasterFireException")
+          end
+        end
+      end
+    end
+
     describe ".send_to_hoptoad" do
       describe "any 2XX response" do
         before(:each) do
